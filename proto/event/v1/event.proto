@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package event.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/ngicks/example-grpc-gateway/gen/go/event/v1;eventv1";
+
+// Event represents a single event with timestamp and data
+message Event {
+  // Unique identifier for the event
+  string id = 1;
+
+  // Timestamp when the event occurred
+  google.protobuf.Timestamp timestamp = 2;
+
+  // Flexible data field that can contain any JSON-like structure
+  google.protobuf.Struct data = 3;
+}
+
+// Request message for storing an event
+message StoreEventRequest {
+  // Event to be stored (without ID, as it will be generated)
+  google.protobuf.Timestamp timestamp = 1;
+  google.protobuf.Struct data = 2;
+}
+
+// Response message for storing an event
+message StoreEventResponse {
+  // The stored event with generated ID
+  Event event = 1;
+}
+
+// Request message for getting events
+message GetEventsRequest {
+  // Optional: Get events after this timestamp
+  google.protobuf.Timestamp since = 1;
+
+  // Optional: Get events before this timestamp
+  google.protobuf.Timestamp until = 2;
+
+  // Maximum number of events to return (0 = no limit)
+  int32 limit = 3;
+}
+
+// Response message for getting events
+message GetEventsResponse {
+  // List of events matching the criteria
+  repeated Event events = 1;
+}
+
+// Request message for streaming events
+message StreamEventsRequest {
+  // Optional: Start streaming from this timestamp
+  // If not provided, streams from now
+  google.protobuf.Timestamp since = 1;
+}
+
+// Response message for streaming events (each message contains one event)
+message StreamEventsResponse {
+  Event event = 1;
+}
+
+// EventService provides methods for storing and retrieving events
+service EventService {
+  // Store a single event
+  rpc StoreEvent(StoreEventRequest) returns (StoreEventResponse);
+
+  // Get a list of events based on filter criteria
+  rpc GetEvents(GetEventsRequest) returns (GetEventsResponse);
+
+  // Stream events in real-time
+  rpc StreamEvents(StreamEventsRequest) returns (stream StreamEventsResponse);
+
+  // Delete all events (useful for testing)
+  rpc ClearEvents(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
